@@ -68,7 +68,7 @@ create_onion_domain_for_service() {
   ensure_onion_domain_is_created_by_starting_tor "$project_name" "$local_project_port" "$public_port_to_access_onion"
 
   # Assert the tor_log.txt does not contain error.
-  assert_file_does_not_contains_string "\[err\]" "$TOR_LOG_FILEPATH"
+  assert_file_does_not_contains_string "\[err\]" "$TOR_LOG_FILENAME"
 }
 
 ensure_onion_domain_is_created_by_starting_tor() {
@@ -83,9 +83,9 @@ ensure_onion_domain_is_created_by_starting_tor() {
   # TODO: include max_tor_wait_time as parameter
   yellow_msg "Now starting tor, and waiting (max) $wait_time_sec seconds to generate onion url locally."
 
-  # Start "sudo tor" in the background
-  sudo tor | tee "$TOR_LOG_FILEPATH" >/dev/null &
-  # sudo tor & | tee "$TOR_LOG_FILEPATH" >/dev/null
+  # Start "tor" in the background
+  tor | tee "$TOR_LOG_FILENAME" >/dev/null &
+  # tor & | tee "$TOR_LOG_FILENAME" >/dev/null
 
   # Set the start time of the function
   start_time=$(date +%s)
@@ -101,7 +101,7 @@ ensure_onion_domain_is_created_by_starting_tor() {
 
         onion_domain="$(get_onion_domain "$project_name")"
 
-        # If the onion URL exists, terminate the "sudo tor" process and return 0
+        # If the onion URL exists, terminate the "tor" process and return 0
         kill_tor_if_already_running
         green_msg "Successfully created your onion domain locally. Proceeding.."
         sleep 5
@@ -134,8 +134,9 @@ kill_tor_if_already_running() {
   local output
   local normal_tor_closed
   local sudo_tor_closed
+  assert_is_non_empty_string "$SOCKS_PORT"
   while true; do
-    output=$(netstat -ano | grep LISTEN | grep 9050)
+    output=$(netstat -ano | grep LISTEN | grep $SOCKS_PORT)
     if [[ "$output" != "" ]]; then
       sudo killall tor
       sudo systemctl stop tor
@@ -145,7 +146,7 @@ kill_tor_if_already_running() {
       normal_tor_closed="true"
     fi
 
-    sudo_output=$(sudo netstat -ano | grep LISTEN | grep 9050)
+    sudo_output=$(sudo netstat -ano | grep LISTEN | grep $SOCKS_PORT)
     if [[ "$sudo_output" != "" ]]; then
       # sudo kill -9 `pidof tor`
       sudo killall tor
@@ -163,9 +164,10 @@ kill_tor_if_already_running() {
 
 assert_tor_is_not_running() {
   local output
-  output=$(netstat -ano | grep LISTEN | grep 9050)
+  assert_is_non_empty_string "$SOCKS_PORT"
+  output=$(netstat -ano | grep LISTEN | grep $SOCKS_PORT)
   if [[ "$output" != "" ]]; then
-    echo "ERROR, tor/something is still running on port 9050:$output"
+    echo "ERROR, tor/something is still running on port $SOCKS_PORT:$output"
     exit 6
   fi
 

@@ -119,7 +119,7 @@ assert_file_does_not_contains_string() {
 
   manual_assert_file_exists "$relative_filepath" "true"
 
-  # read -p "use_sudo=$use_sudo"
+  
   if [ "$(file_contains_string "$some_string" "$relative_filepath" "$use_sudo")" != "NOTFOUND" ]; then
     echo "Error, the string:$some_string was found in:$relative_filepath"
     exit 6
@@ -170,8 +170,6 @@ get_line_nr() {
 get_line_by_nr() {
   number=$1
   relative_filepath=$2
-  #read -p "number=$number"
-  #read -p "relative_filepath=$relative_filepath"
   the_line=$(sed "${number}q;d" "$relative_filepath")
   echo "$the_line"
 }

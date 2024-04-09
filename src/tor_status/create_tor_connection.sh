@@ -2,15 +2,15 @@
 start_tor_in_background() {
   local wait_time_sec=260
 
-  sudo tor | tee "$TOR_LOG_FILEPATH" >/dev/null &
+  tor | tee "$TOR_LOG_FILENAME" >/dev/null &
   start_time=$(date +%s)
 
   while true; do
     error_substring='\[err\]'
-    if [ "$(file_contains_string "$error_substring" "$TOR_LOG_FILEPATH")" == "FOUND" ]; then
+    if [ "$(file_contains_string "$error_substring" "$TOR_LOG_FILENAME")" == "FOUND" ]; then
       kill_tor_if_already_running
       sleep 5
-      sudo tor | tee "$TOR_LOG_FILEPATH" >/dev/null &
+      tor | tee "$TOR_LOG_FILENAME" >/dev/null &
     else
       if [[ "$(tor_is_connected)" == "FOUND" ]]; then
         green_msg "Successfully setup tor connection."
